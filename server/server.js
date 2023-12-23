@@ -27,15 +27,10 @@ app.post("/post_tone2", async (req, res) => {
 });
 
 app.post("/schedule", async (req, res) => {
-  let { date } = req.body;
-  ifttt
-    .request(eventname3, date)
+    ifttt
+    .request(eventname3)
     .then((response) => {})
     .catch((err) => {});
-});
-
-app.get("/message", (req, res) => {
-  res.json({ message: "Hello from the server!" });
 });
 
 app.listen(8000, () => {
