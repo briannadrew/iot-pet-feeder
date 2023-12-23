@@ -3,8 +3,8 @@ const { Board, Stepper } = require("johnny-five");
 const { EtherPortClient } = require("etherport-client");
 const board = new Board({
   port: new EtherPortClient({
-    host: "192.168.1.53",
-    port: 3030,
+    host: "192.168.1.53", // put the ip address your arduino here
+    port: 3030, // arduino communication port
   }),
   repl: false,
 });
@@ -33,6 +33,46 @@ board.on("ready", () => {
     },
   });
 
+  // calculate time from now to the scheduled feeding time, then feed when that amount of time has passed
+  // continue to feed every 12 hours from scheduled time
+  // if you need to replace the time being fed rather than add a new time, simply restart this server and set a new time on the app
+  function scheduler(time) {
+    let timeSplit = time.toString().split(":");
+    let hour = Number(timeSplit[0]);
+    let minutes = Number(timeSplit[1]);
+    const twelveHrs = 43200000;
+    const now = new Date();
+    let eta_ms =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        hour,
+        minutes,
+        0,
+        0
+      ).getTime() - now;
+    if (eta_ms < 0) {
+      eta_ms += twelveHrs;
+    }
+    setTimeout(function () {
+      feed();
+      setInterval(feed, twelveHrs);
+    }, eta_ms);
+  }
+
+  // communicate with the stepper to perform the feed
+  function feed() {
+    // set stepper to 180 rpm, CCW, with acceleration and deceleration
+    stepper.rpm(200).direction(0).accel(1200).decel(1200);
+
+    // make 10 full revolutions
+    console.log("Moving CCW");
+    stepper.step(2000, () => {
+      console.log("Done moving CCW");
+    });
+  }
+
   app.post("/post_tone1", async (req, res) => {
     ifttt
       .request(eventname1)
@@ -47,29 +87,19 @@ board.on("ready", () => {
       .catch((err) => {});
   });
 
+  // receive request to feed the pet immediately
+  app.post("/feed", async (req, res) => {
+    feed();
+  });
+
+  // receive request to schedule a time to feed the pet
   app.post("/schedule", async (req, res) => {
-    console.log("hey");
-    /**
-     * In order to use the Stepper class, your board must be flashed with
-     * either of the following:
-     *
-     * - AdvancedFirmata https://github.com/soundanalogous/AdvancedFirmata
-     * - ConfigurableFirmata https://github.com/firmata/arduino/releases/tag/v2.6.2
-     *
-     */
-
-    // set stepp[er to 180 rpm, CCW, with acceleration and deceleration
-    stepper.rpm(200).direction(0).accel(1200).decel(1200);
-
-    // make 10 full revolutions
-    console.log("Moving CCW");
-    stepper.step(2000, () => {
-      console.log("Done moving CCW");
-      // process.exit();
-    });
+    let time = req.body.time;
+    scheduler(time);
   });
 });
 
+// this server runs on local host port 8000
 app.listen(8000, () => {
   console.log("Server is running on port 8000.");
 });

@@ -1,42 +1,41 @@
 import "./App.css";
 import React, { useState } from "react";
 import axios from "axios";
+// font awesome icons
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faIceCream } from "@fortawesome/free-solid-svg-icons";
-import { faBoltLightning } from "@fortawesome/free-solid-svg-icons";
-import { faBowlFood } from "@fortawesome/free-solid-svg-icons";
+import {
+  faIceCream,
+  faBoltLightning,
+  faBowlFood,
+} from "@fortawesome/free-solid-svg-icons";
+
+// put the ip address of the device your node server is running on here
 const ip_address = "192.168.1.223";
 
 function App() {
+  // set time for feed to be scheduled
   const [time, setTime] = useState("");
+  // whether button is selected or not
+  const [isActiveOne, setActiveOne] = useState("true");
+  const [isActiveTwo, setActiveTwo] = useState("");
 
-  function schedule(event) {
-    event.preventDefault();
-    let timeSplit = time.split(":");
-    let hour = Number(timeSplit[0]);
-    let minutes = Number(timeSplit[1]);
-    const twelveHrs = 43200000;
-    const now = new Date();
-    let eta_ms =
-      new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        hour,
-        minutes,
-        0,
-        0
-      ).getTime() - now;
-    if (eta_ms < 0) {
-      eta_ms += twelveHrs;
+  const ToggleActiveOne = () => {
+    if (!isActiveOne) {
+      setActiveOne(!isActiveOne);
+      setActiveTwo(!isActiveTwo);
     }
-    setTimeout(function () {
-      scheduleFeed();
-      setInterval(scheduleFeed, twelveHrs);
-    }, eta_ms);
-  }
+  };
 
+  const ToggleActiveTwo = () => {
+    if (!isActiveTwo) {
+      setActiveTwo(!isActiveTwo);
+      setActiveOne(!isActiveOne);
+    }
+  };
+
+  // make request to the backend to set the feeding tone to the ice cream truck song
   async function icecream() {
+    ToggleActiveOne();
     try {
       await axios.post("http://" + ip_address + ":8000/post_tone1");
     } catch (error) {
@@ -44,7 +43,9 @@ function App() {
     }
   }
 
+  // make request to the backend to se the feeding tune to the harry potter theme song
   async function harrypotter() {
+    ToggleActiveTwo();
     try {
       await axios.post("http://" + ip_address + ":8000/post_tone2");
     } catch (error) {
@@ -52,20 +53,21 @@ function App() {
     }
   }
 
+  // make request to the backend to feed the pet immediately
   async function feed(event) {
     event.preventDefault();
-    console.log("feed");
     try {
-      await axios.post("http://" + ip_address + ":8000/schedule");
+      await axios.post("http://" + ip_address + ":8000/feed");
     } catch (error) {
       console.log(error);
     }
   }
 
-  async function scheduleFeed() {
-    console.log("scheduled feed");
+  // make request to the backend to feed the pet at the scheduled time
+  async function scheduleFeed(event) {
+    event.preventDefault();
     try {
-      await axios.post("http://" + ip_address + ":8000/schedule");
+      await axios.post("http://" + ip_address + ":8000/schedule", { time });
     } catch (error) {
       console.log(error);
     }
@@ -81,10 +83,20 @@ function App() {
           <h2>♫ Select a Ringtone ♫</h2>
         </div>
         <div className="tone-buttons">
-          <button id="icecream" onClick={icecream}>
+          {/* button to select ice cream truck song tune */}
+          <button
+            id="icecream"
+            className={isActiveOne ? "active" : null}
+            onClick={icecream}
+          >
             <FontAwesomeIcon icon={faIceCream} />
           </button>
-          <button id="harrypotter" onClick={harrypotter}>
+          {/* button to select harry potter theme song tune */}
+          <button
+            id="harrypotter"
+            className={isActiveTwo ? "active" : null}
+            onClick={harrypotter}
+          >
             <FontAwesomeIcon icon={faBoltLightning} />
           </button>
         </div>
@@ -93,19 +105,23 @@ function App() {
         <div className="feed-caption">
           <h2>🐾 Feed Your Pet! 🐾</h2>
         </div>
-        <form onSubmit={time === "" ? feed : schedule}>
+        {/* if a time was not given, feed immediately. otherwise, schedule the feed for the given time */}
+        <form onSubmit={time === "" ? feed : scheduleFeed}>
           <label htmlFor="timeinput">Schedule a Time:</label>
           <div>
+            {/* set a time for the pet to be fed */}
             <input
               id="timeinput"
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
             ></input>
+            {/* reset time */}
             <button type="button" id="clear" onClick={(e) => setTime("")}>
               clear
             </button>
           </div>
+          {/* button to feed pet */}
           <button type="submit" id="feeder">
             <FontAwesomeIcon icon={faBowlFood} />
           </button>

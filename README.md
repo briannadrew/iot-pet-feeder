@@ -1,9 +1,14 @@
-# iot-pet-feeder
+# Pet-'O-Matic
 
-<a href="https://codedamn.com/news/reactjs/how-to-connect-react-with-node-js">Server Setup</a>
+Welcome to my IoT (Internet of Things) pet feeder project, Pet-'O-Matic! This project uses a web app built with React for the front end and Node/Express for the back end. This communicates with a Node MCU, which is an ESP-8266-based Arduino microcontroller with built-in Wi-Fi, to turn a stepper motor. This then turns an auger which is part of a 3D-printed pet feeder to feed your pet! Taking things a step further, it provides the ability to schedule a time to feed your pet (or you may feed them immediately with a press of a button). The fun doesn't end there, you are also able to choose one of two tunes to play to notify your pet of feeding time! Choose from the classic "ice cream truck" song, or make things magical with the "Harry Potter" theme.
 
-<a href="https://dev.to/nicm42/how-to-make-a-button-looked-like-it-s-staying-pressed-down-58k">Button Press</a>
+[TOC]
 
-<a href="https://www.youtube.com/watch?v=DgRrrOt0Vr8">React Example</a>
+## Equipment/Software Used
 
-<a href="https://fontawesome.com/docs/web/use-with/react/">Font Awesome Setup</a>
+- Visual Studio Code
+- Arduino IDE
+- Node MCU
+- Step Motor (28BYJ-48) with Driver Test Module Board (ULN2003)
+- Protoboard
+- DC Power Supply
