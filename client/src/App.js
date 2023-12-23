@@ -5,23 +5,32 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faIceCream } from "@fortawesome/free-solid-svg-icons";
 import { faBoltLightning } from "@fortawesome/free-solid-svg-icons";
 import { faBowlFood } from "@fortawesome/free-solid-svg-icons";
-const ip_address = "10.0.0.213";
+const ip_address = "192.168.1.223";
 
 function App() {
-  const [time, setTime] = useState("")
+  const [time, setTime] = useState("");
 
-  function schedule (event) {
+  function schedule(event) {
     event.preventDefault();
     let timeSplit = time.split(":");
     let hour = Number(timeSplit[0]);
     let minutes = Number(timeSplit[1]);
     const twelveHrs = 43200000;
     const now = new Date();
-    let eta_ms = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minutes, 0, 0).getTime() - now;
+    let eta_ms =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        hour,
+        minutes,
+        0,
+        0
+      ).getTime() - now;
     if (eta_ms < 0) {
       eta_ms += twelveHrs;
     }
-    setTimeout(function() {
+    setTimeout(function () {
       scheduleFeed();
       setInterval(scheduleFeed, twelveHrs);
     }, eta_ms);
@@ -45,6 +54,7 @@ function App() {
 
   async function feed(event) {
     event.preventDefault();
+    console.log("feed");
     try {
       await axios.post("http://" + ip_address + ":8000/schedule");
     } catch (error) {
@@ -52,7 +62,8 @@ function App() {
     }
   }
 
-  async function scheduleFeed () {
+  async function scheduleFeed() {
+    console.log("scheduled feed");
     try {
       await axios.post("http://" + ip_address + ":8000/schedule");
     } catch (error) {
@@ -82,11 +93,18 @@ function App() {
         <div className="feed-caption">
           <h2>🐾 Feed Your Pet! 🐾</h2>
         </div>
-        <form onSubmit={time === '' ? feed : schedule}>
-          <label htmlFor="timeinput">Schedule a time:</label>
+        <form onSubmit={time === "" ? feed : schedule}>
+          <label htmlFor="timeinput">Schedule a Time:</label>
           <div>
-            <input id="timeinput" type="time" value={time} onChange={(e) => setTime(e.target.value)}></input>
-            <button id="clear" onClick={(e => setTime(''))}>clear</button>
+            <input
+              id="timeinput"
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+            ></input>
+            <button type="button" id="clear" onClick={(e) => setTime("")}>
+              clear
+            </button>
           </div>
           <button type="submit" id="feeder">
             <FontAwesomeIcon icon={faBowlFood} />
