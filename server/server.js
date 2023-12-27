@@ -1,5 +1,4 @@
-require("dotenv").config();
-const { Board, Stepper } = require("johnny-five");
+const { Board, Led } = require("johnny-five");
 const { EtherPortClient } = require("etherport-client");
 const board = new Board({
   port: new EtherPortClient({
@@ -11,27 +10,23 @@ const board = new Board({
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const IFTTT = require("node-ifttt-maker");
-const ifttt = new IFTTT(process.env.IFTTT_KEY);
-const eventname1 = "RingTone1";
-const eventname2 = "RingTone2";
-const eventname3 = "Schedule";
+
+// board pins
+const PIN1 = 15; // tone 1
+const PIN2 = 12; // tone 2
+const PIN3 = 13; // forward
+const PIN4 = 14; // reverse
 
 app.use(cors());
 app.use(express.json());
 
 board.on("ready", () => {
   console.log("Board ready");
-  const stepper = new Stepper({
-    type: Stepper.TYPE.FOUR_WIRE,
-    stepsPerRev: 64,
-    pins: {
-      motor1: 1,
-      motor2: 2,
-      motor3: 3,
-      motor4: 4,
-    },
-  });
+  let tone1 = true;
+  var out1 = new Led(PIN1); // tone 1
+  var out2 = new Led(PIN2); // tone 2
+  var out3 = new Led(PIN3); // forward
+  var out4 = new Led(PIN4); // reverse
 
   // calculate time from now to the scheduled feeding time, then feed when that amount of time has passed
   // continue to feed every 12 hours from scheduled time
@@ -63,28 +58,53 @@ board.on("ready", () => {
 
   // communicate with the stepper to perform the feed
   function feed() {
-    // set stepper to 180 rpm, CCW, with acceleration and deceleration
-    stepper.rpm(200).direction(0).accel(1200).decel(1200);
+    console.log(tone1);
+    if (tone1) {
+      out1.on();
+      setTimeout(() => {
+        out1.stop();
+      }, 2000);
+    } else {
+      out2.on();
+      setTimeout(() => {
+        out2.stop();
+      }, 2000);
+    }
+    setTimeout(
+      () => {
+        out3.on();
+      },
+      tone1 ? 6000 : 8000
+    );
+    setTimeout(
+      () => {
+        out3.off();
+      },
+      tone1 ? 21000 : 23000
+    );
+    setTimeout(
+      () => {
+        out4.on();
+      },
+      tone1 ? 22000 : 24000
+    );
+    setTimeout(
+      () => {
+        out4.off();
+      },
+      tone1 ? 37000 : 39000
+    );
 
-    // make 10 full revolutions
-    console.log("Moving CCW");
-    stepper.step(2000, () => {
-      console.log("Done moving CCW");
-    });
+    out1.off();
+    out2.off();
   }
 
   app.post("/post_tone1", async (req, res) => {
-    ifttt
-      .request(eventname1)
-      .then((response) => {})
-      .catch((err) => {});
+    tone1 = true;
   });
 
   app.post("/post_tone2", async (req, res) => {
-    ifttt
-      .request(eventname2)
-      .then((response) => {})
-      .catch((err) => {});
+    tone1 = false;
   });
 
   // receive request to feed the pet immediately
